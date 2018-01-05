@@ -19,3 +19,6 @@ There's a little bit of configuration you need to do before you can use voice ch
 - This voice chat is peer to peer, which means all voice data is transferred directly between clients and not through the server. This means that no strain is put on the server when you run this package.
 - You can actually make this voice chat global. Not recommended for crowded servers.
 - Players have a red speaker icon next to their head when they talk.
+
+## Todo
+- Optimize by not streaming voice when players are not in range.
