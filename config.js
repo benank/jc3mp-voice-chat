@@ -1,6 +1,6 @@
 module.exports = 
 {
-    talk_key: 'C', // Default push to talk key
+    talk_key: 'Q', // Default push to talk key
     min_distance: 3, // Distance until volume starts decreasing
     max_distance: 35, // Maximum distance until volume is 0
     host: 'MY SERVER IP', // Your server's IP here
