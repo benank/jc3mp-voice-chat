@@ -19,6 +19,7 @@ There's a little bit of configuration you need to do before you can use voice ch
 - This voice chat is peer to peer, which means all voice data is transferred directly between clients and not through the server. This means that no strain is put on the server when you run this package.
 - The maximum distance is capped to a player's streaming range, so it cannot be global. I may add an option for global voice later.
 - Players have a red speaker icon next to their head when they talk.
+- The port in `config.js` must be open to allow voice chat to work.
 
 ## Bugs
 - Media Access Request popup doesn't work quite right, and this will be fixed in a later update by nanos. See [here](https://gitlab.nanos.io/jc3mp/bugs/issues/494).
