@@ -38,14 +38,12 @@ jcmp.events.AddRemoteCallable('voice/add_connections', (conns) =>
 
     for (let i = 0; i < conns.length; i++)
     {
-        ui.CallEvent('add_id', conns[i].sid, conns[i].pid);
         connections[conns[i].pid] = conns[i].sid;
     }
 })
 
 jcmp.events.AddRemoteCallable('voice/add_connection', (sid, pid) => 
 {
-    ui.CallEvent('add_id', sid);
     connections[pid] = sid;
 })
 
@@ -115,6 +113,42 @@ function RenderSpeaker(r, m)
 {
     r.SetTransform(m.Scale(scale));
     r.DrawTexture(ui.texture, zero, size);
+}
+
+// Every second, check close people
+ui.AddEvent('second', () => 
+{
+    const player_pos = jcmp.localPlayer.position;
+    for (let pid in connections)
+    {
+        const sid = connections[pid];
+        if (IsInRange(pid, player_pos))
+        {
+            ui.CallEvent('add_id', sid);
+        }
+        else
+        {
+            ui.CallEvent('remove_id', sid);
+        }
+    }
+})
+
+/**
+ * Checks if a player with pid is in range of position
+ */
+function IsInRange(pid, pos)
+{
+    let player = jcmp.players.find((p) => p.networkId == pid);
+    if (player && config)
+    {
+        let dist = player.position.sub(pos).length;
+        if (dist < config.max_distance + 50) // Small buffer to improve smoothness as people move
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function GetPidFromSid(sid)

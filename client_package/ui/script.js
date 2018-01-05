@@ -9,7 +9,7 @@ $(document).ready(function()
     let host; // Host address for id
     let port; // Port address for id
     let talk_key; // Key to use push to talk
-    const ids = []; // peer ids of players
+    const ids = []; // peer ids of players in range
     let talking = false; // Whether or not we are talking
 
     function AddStreamToPage(stream, id) 
@@ -92,7 +92,7 @@ $(document).ready(function()
     {
         const key = e.keyCode;
 
-        if (!key) {return;}
+        if (!key || !talk_key) {return;}
  
         if (key != talk_key.charCodeAt(0) || talking || !enabled) {return;}
 
@@ -106,7 +106,7 @@ $(document).ready(function()
     {
         const key = e.keyCode;
 
-        if (!key) {return;}
+        if (!key || !talk_key) {return;}
  
         if (key != talk_key.charCodeAt(0) || !talking) {return;}
 
@@ -231,5 +231,10 @@ $(document).ready(function()
         jcmp.CallLocalEvent('ui_ready');
         // Client denied using media
     });
+
+    setInterval(function() 
+    {
+        jcmp.CallLocalEvent('second');
+    }, 1000);
 
 })
