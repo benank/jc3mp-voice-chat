@@ -3,24 +3,41 @@ $(document).ready(function()
     let my_id; // Steam id
     let mediaStream; // This client's mediaStream
     let peer; // This client's peer
+    const calls_outgoing = {};
     const calls = {};
-    const HOST = 'localhost';
+    let host; // Host address for id
+    let port; // Port address for id
     const talk_key = 192; // ` key
-    const ids = [];
-    let talking = false;
+    const ids = []; // peer ids of players
+    let talking = false; // Whether or not we are talking
 
     function AddStreamToPage(stream, id) 
     {
-        $(`#a_${id}`).remove(); // Remove if there is an existing stream of same id
-        $('html').append(
-            $(`<audio id='a_${id}' src='${window.URL.createObjectURL(stream)}' autoplay></audio>`));
+        StopCall(id); // Stop in case there is a call going already with same id
+        const audioElement = document.createElement('audio');
+        audioElement.src = window.URL.createObjectURL(stream);
+        audioElement.id = `a_${id}`;
+        audioElement.volume = 1;
+        audioElement.muted = true; // Mute until it's updated with volume from distance
+
+        calls[id].audioElement = audioElement;
+
+        audioElement.autoplay = true;
+        audioElement.play();
+
     }
 
-    jcmp.AddEvent('set_id', (id) => 
+    jcmp.AddEvent('init', (id, config) => 
     {
         my_id = id;
 
-        ConnectToServer();
+        if (config)
+        {
+            config = JSON.parse(config);
+            host = config.host;
+            port = config.port;
+            ConnectToServer();
+        }
     })
 
     jcmp.AddEvent('add_id', (id) => 
@@ -35,8 +52,33 @@ $(document).ready(function()
                 CallPeer(id);
             }
         }
-        //CallPeer(id);
     })
+
+    jcmp.AddEvent('remove_id', (id) => 
+    {
+        if (ids.indexOf(id) > -1)
+        {
+            ids.splice(ids.indexOf(id), 1);
+        }
+    })
+
+    // Update distance of an audio source
+    jcmp.AddEvent('update_volume', (sid, volume) => 
+    {
+        if (!calls[sid]) // If there is no active call, do nothing
+        {
+            return;
+        }
+
+        if (!calls[sid].audioElement)
+        {
+            return;
+        }
+
+        calls[sid].audioElement.muted = false;
+        calls[sid].audioElement.volume = Math.min(1, Math.max(volume, 0));
+    })
+
 
     // Player begins holding down key to talk
     document.onkeydown = (e) => 
@@ -47,7 +89,7 @@ $(document).ready(function()
 
         talking = true;
         StartVoice();
-        console.log('Begin talking');
+        jcmp.CallLocalEvent('player_start_call', my_id);
     };
 
     // Player releases key to stop talking
@@ -59,7 +101,7 @@ $(document).ready(function()
 
         talking = false;
         EndVoice();
-        console.log('End talking');
+        jcmp.CallLocalEvent('player_end_call', my_id);
     };
 
     // ------------------ PEER FUNCTIONS
@@ -70,32 +112,32 @@ $(document).ready(function()
     function ConnectToServer()
     {
         // Create our peer
-        peer = new Peer(my_id, {host: HOST, port: 9000, path: '/p2p-voice', debug: 2});
+        peer = new Peer(my_id, {host: host, port: port, path: '/p2p-voice', debug: 2});
 
         // When we get an id from the server
-        peer.on('open', function(id) {
-            console.log('My peer ID is: ' + id);
+        peer.on('open', function(id) 
+        {
             jcmp.CallLocalEvent('ready', mediaStream != undefined);
         });
 
         // When someone calls us
         peer.on('call', function(call) 
         {
-            console.log(`Someone called us, answering...`);
-            // Answer the call, providing our mediaStream
-            //if (!mediaStream) {return;}
-            //call.answer(mediaStream);
+            calls[call.peer] = {call: call};
+
+            jcmp.CallLocalEvent('player_start_call', call.peer);
             call.answer(); // Only listen to others, and they will listen to you
 
             call.on('stream', function(stream) 
             {
-                console.log(`We got a stream from a peer 2!`);
                 AddStreamToPage(stream, call.peer);
             })
 
             call.on('close', function() 
             {
-                $(`#a_${call.peer}`).remove();
+                StopCall(call.peer);
+                jcmp.CallLocalEvent('player_end_call', call.peer);
+                delete calls[call.peer];
             })
         });
 
@@ -106,22 +148,38 @@ $(document).ready(function()
     }
 
     /**
+     * Stops an in progress call.
+     */
+    function StopCall(id)
+    {
+        if (calls[id] && calls[id].audioElement) 
+        {
+            calls[id].audioElement.muted = true;
+            calls[id].audioElement.src = "";
+        }
+    }
+
+    /**
      * Call another peer by steam id
      */
     function CallPeer(id)
     {
-        console.log(`Calling peer ${id}...`)
         // Call another peer
         let call = peer.call(id, mediaStream).on('error', function(err) 
         {
             console.log('ERROR!');
             console.log(err);
-            $(`#a_${id}`).remove();
+
+            if (calls_outgoing[id]) 
+            {
+                calls_outgoing[id].call.close(); 
+                delete calls_outgoing[id];
+            }
         });
 
         if (!call) {return;}
 
-        calls[id] = call;
+        calls_outgoing[id] = {call: call};
     }
 
     /**
@@ -140,10 +198,10 @@ $(document).ready(function()
      */
     function EndVoice()
     {
-        for (let id in calls)
+        for (let id in calls_outgoing)
         {
-            calls[id].close(); // End all calls
-            delete calls[id];
+            calls_outgoing[id].call.close(); // End all calls
+            delete calls_outgoing[id];
         }
     }
 
