@@ -102,6 +102,12 @@ jcmp.events.Add('GameUpdateRender', (r) =>
     }
 })
 
+jcmp.ui.AddEvent('chat_input_state', (s) => 
+{
+    if (!ui) {return;}
+    ui.CallEvent('toggle_enabled', !s);
+});
+
 /**
  * Renders a speaker icon next to a player's head in game.
  */

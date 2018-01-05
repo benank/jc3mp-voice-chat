@@ -1,5 +1,6 @@
 $(document).ready(function() 
 {
+    let enabled = true;
     let my_id; // Steam id
     let mediaStream; // This client's mediaStream
     let peer; // This client's peer
@@ -7,7 +8,7 @@ $(document).ready(function()
     const calls = {};
     let host; // Host address for id
     let port; // Port address for id
-    const talk_key = 192; // ` key
+    let talk_key; // Key to use push to talk
     const ids = []; // peer ids of players
     let talking = false; // Whether or not we are talking
 
@@ -36,8 +37,14 @@ $(document).ready(function()
             config = JSON.parse(config);
             host = config.host;
             port = config.port;
+            talk_key = config.talk_key.toUpperCase();
             ConnectToServer();
         }
+    })
+
+    jcmp.AddEvent('toggle_enabled', (e) => 
+    {
+        enabled = e;
     })
 
     jcmp.AddEvent('add_id', (id) => 
@@ -83,9 +90,11 @@ $(document).ready(function()
     // Player begins holding down key to talk
     document.onkeydown = (e) => 
     {
-        const key = (typeof e.which === 'number') ? e.which : e.keyCode;
+        const key = e.keyCode;
 
-        if (key != talk_key || talking) {return;}
+        if (!key) {return;}
+ 
+        if (key != talk_key.charCodeAt(0) || talking || !enabled) {return;}
 
         talking = true;
         StartVoice();
@@ -95,9 +104,11 @@ $(document).ready(function()
     // Player releases key to stop talking
     document.onkeyup = (e) => 
     {
-        const key = (typeof e.which === 'number') ? e.which : e.keyCode;
+        const key = e.keyCode;
 
-        if (key != talk_key || !talking) {return;}
+        if (!key) {return;}
+ 
+        if (key != talk_key.charCodeAt(0) || !talking) {return;}
 
         talking = false;
         EndVoice();
