@@ -5,7 +5,7 @@ Peer to peer ingame voice chat for Just Cause 3 Multiplayer
 
 ## Installation
 1. Drop it in your packages directory.
-2. Run `npm install` to install the required node module.
+2. Run `npm install` inside the package to install the required node module.
 
 ## Configuration
 There's a little bit of configuration you need to do before you can use voice chat.
