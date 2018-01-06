@@ -1,40 +1,5 @@
 $(document).ready(function() 
 {
-    // 3D stuff
-    const camera_pos = {x: 0, y: 0, z: 0};
-
-    // Update the camera's position and rotation
-    jcmp.AddEvent('update_camera', (x, y, z) => 
-    {
-        camera_pos.x = x;
-        camera_pos.y = y;
-        camera_pos.z = z;
-    })
-
-    // Update position of a player
-    jcmp.AddEvent('update_position', (sid, x, y, z) => 
-    {
-        if (!calls[sid]) // If there is no active call, do nothing
-        {
-            return;
-        }
-
-        if (!calls[sid].source)
-        {
-            return;
-        }
-
-        calls[sid].source.setPosition(x - camera_pos.x, y - camera_pos.y, z - camera_pos.z);
-
-    })
-
-    // ----------------------------------- END 3D STUFF
-
-    
-    const audioContext = new AudioContext();
-    const resonanceAudioScene = new ResonanceAudio(audioContext);
-    resonanceAudioScene.output.connect(audioContext.destination);
-
     let enabled = true;
     let my_id; // Steam id
     let mediaStream; // This client's mediaStream
@@ -44,7 +9,6 @@ $(document).ready(function()
     let host; // Host address for id
     let port; // Port address for id
     let talk_key; // Key to use push to talk
-    let max_distance, min_distance;
     const ids = []; // peer ids of players in range
     let talking = false; // Whether or not we are talking
 
@@ -52,23 +16,15 @@ $(document).ready(function()
     {
         StopCall(id); // Stop in case there is a call going already with same id
         const audioElement = document.createElement('audio');
-        audioElement.srcObject = stream;
+        audioElement.src = window.URL.createObjectURL(stream);
         audioElement.id = `a_${id}`;
         audioElement.volume = 1;
+        audioElement.muted = true; // Mute until it's updated with volume from distance
 
-        const audioElementSource = audioContext.createMediaStreamSource(stream);
-
-        const source = resonanceAudioScene.createSource({
-            minDistance: min_distance,
-            maxDistance: max_distance
-        });
-        audioElementSource.connect(source.input);
-
-        calls[id].source = source;
         calls[id].audioElement = audioElement;
 
+        audioElement.autoplay = true;
         audioElement.play();
-        audioElement.muted = true; // Mute
 
     }
 
@@ -81,8 +37,6 @@ $(document).ready(function()
             config = JSON.parse(config);
             host = config.host;
             port = config.port;
-            min_distance = config.min_distance;
-            max_distance = config.max_distance;
             talk_key = config.talk_key.toUpperCase();
             ConnectToServer();
         }
@@ -114,6 +68,24 @@ $(document).ready(function()
             ids.splice(ids.indexOf(id), 1);
         }
     })
+
+    // Update distance of an audio source
+    jcmp.AddEvent('update_volume', (sid, volume) => 
+    {
+        if (!calls[sid]) // If there is no active call, do nothing
+        {
+            return;
+        }
+
+        if (!calls[sid].audioElement)
+        {
+            return;
+        }
+
+        calls[sid].audioElement.muted = false;
+        calls[sid].audioElement.volume = Math.min(1, Math.max(volume, 0));
+    })
+
 
     // Player begins holding down key to talk
     document.onkeydown = (e) => 
