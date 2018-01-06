@@ -64,9 +64,12 @@ $(document).ready(function()
 
         calls[id].source = source;
         calls[id].audioElement = audioElement;
+        calls[id].elementSource = audioElementSource;
 
         audioElement.play();
         audioElement.muted = true; // Mute
+
+        jcmp.CallLocalEvent('player_start_call', id);
 
     }
 
@@ -110,6 +113,7 @@ $(document).ready(function()
         if (ids.indexOf(id) > -1)
         {
             ids.splice(ids.indexOf(id), 1);
+            StopCall(id);
         }
     })
 
@@ -162,7 +166,6 @@ $(document).ready(function()
         {
             calls[call.peer] = {call: call};
 
-            jcmp.CallLocalEvent('player_start_call', call.peer);
             call.answer(); // Only listen to others, and they will listen to you
 
             call.on('stream', function(stream) 
@@ -173,7 +176,6 @@ $(document).ready(function()
             call.on('close', function() 
             {
                 StopCall(call.peer);
-                jcmp.CallLocalEvent('player_end_call', call.peer);
                 delete calls[call.peer];
             })
         });
@@ -189,10 +191,13 @@ $(document).ready(function()
      */
     function StopCall(id)
     {
+        jcmp.CallLocalEvent('player_end_call', id);
         if (calls[id] && calls[id].audioElement) 
         {
             calls[id].audioElement.muted = true;
-            calls[id].audioElement.src = "";
+            calls[id].audioElement.srcObject = undefined;
+            calls[id].elementSource.disconnect(calls[id].source.input);
+            $(`#a_${id}`).remove();
         }
     }
 
