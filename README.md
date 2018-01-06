@@ -23,6 +23,7 @@ There's a little bit of configuration you need to do before you can use voice ch
 
 ## Bugs
 - Media Access Request popup doesn't work quite right, and this will be fixed in a later update by nanos. See [here](https://gitlab.nanos.io/jc3mp/bugs/issues/494).
+- Not recommended for production use yet because sometimes microphone streams don't stop when you stop holding down the push to talk key. This makes voices global and no longer push to talk. I am investigating this issue.
 
 ## Todo
 - Add a small UI so that players can mute other players, adjust volume, or disable entirely.
