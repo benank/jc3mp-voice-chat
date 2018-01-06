@@ -53,6 +53,8 @@ jcmp.events.AddRemoteCallable('voice/remove_connection', (sid, pid) =>
     delete connections[pid];
 })
 
+// player 1 is talking and goes out of range, then comes back into stream range and player 2 has open mic
+
 ui.AddEvent('player_start_call', (sid) => 
 {
     if (players_talking.includes(sid)) {return;} // If it's already there, don't add it
@@ -61,7 +63,7 @@ ui.AddEvent('player_start_call', (sid) =>
 
 ui.AddEvent('player_end_call', (sid) => 
 {
-    if (!players_talking.includes(sid)) {return;} // If it's not there, do nothing
+    if (players_talking.indexOf(sid) == -1) {return;} // If it's not there, do nothing
     players_talking.splice(players_talking.indexOf(sid), 1); // Remove it
 })
 
@@ -122,6 +124,8 @@ ui.AddEvent('second', () =>
     for (let pid in connections)
     {
         const sid = connections[pid];
+        if (sid == my_id) {continue;}
+        
         if (IsInRange(pid, player_pos))
         {
             ui.CallEvent('add_id', sid);

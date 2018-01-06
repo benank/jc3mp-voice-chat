@@ -16,7 +16,7 @@ $(document).ready(function()
     {
         StopCall(id); // Stop in case there is a call going already with same id
         const audioElement = document.createElement('audio');
-        audioElement.src = window.URL.createObjectURL(stream);
+        audioElement.srcObject = stream;
         audioElement.id = `a_${id}`;
         audioElement.volume = 1;
         audioElement.muted = true; // Mute until it's updated with volume from distance
@@ -25,6 +25,8 @@ $(document).ready(function()
 
         audioElement.autoplay = true;
         audioElement.play();
+        
+        jcmp.CallLocalEvent('player_start_call', id);
 
     }
 
@@ -66,6 +68,7 @@ $(document).ready(function()
         if (ids.indexOf(id) > -1)
         {
             ids.splice(ids.indexOf(id), 1);
+            StopCall(id);
         }
     })
 
@@ -136,7 +139,6 @@ $(document).ready(function()
         {
             calls[call.peer] = {call: call};
 
-            jcmp.CallLocalEvent('player_start_call', call.peer);
             call.answer(); // Only listen to others, and they will listen to you
 
             call.on('stream', function(stream) 
@@ -147,7 +149,6 @@ $(document).ready(function()
             call.on('close', function() 
             {
                 StopCall(call.peer);
-                jcmp.CallLocalEvent('player_end_call', call.peer);
                 delete calls[call.peer];
             })
         });
@@ -163,10 +164,13 @@ $(document).ready(function()
      */
     function StopCall(id)
     {
+        jcmp.CallLocalEvent('player_end_call', id);
         if (calls[id] && calls[id].audioElement) 
         {
             calls[id].audioElement.muted = true;
-            calls[id].audioElement.src = "";
+            calls[id].audioElement.srcObject = undefined;
+            calls[id].audioElement.volume = 0;
+            $(`#a_${id}`).remove();
         }
     }
 
@@ -224,7 +228,6 @@ $(document).ready(function()
     .then(function(stream) {
         mediaStream = stream;
         jcmp.CallLocalEvent('ui_ready');
-        //AddStreamToPage(mediaStream, '3213123'); 
     })
     .catch(function(err) {
         console.log(err);
