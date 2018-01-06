@@ -70,7 +70,8 @@ jcmp.events.Add('GameUpdateRender', (r) =>
     if (!ui) {return;}
 
     const pos = jcmp.localPlayer.camera.position;
-    ui.CallEvent('update_camera', pos.x, pos.y, pos.z);
+    const rot = jcmp.localPlayer.camera.rotation;
+    ui.CallEvent('update_camera', pos.x, pos.y, pos.z, rot.x, rot.y);
 
     // Update positions of people who are talking
     for (let i = 0; i < players_talking.length; i++)

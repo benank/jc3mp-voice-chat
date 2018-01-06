@@ -1,14 +1,12 @@
 $(document).ready(function() 
 {
     // 3D stuff
-    const camera_pos = {x: 0, y: 0, z: 0};
 
     // Update the camera's position and rotation
-    jcmp.AddEvent('update_camera', (x, y, z) => 
+    jcmp.AddEvent('update_camera', (x, y, z, pitch, yaw) => 
     {
-        camera_pos.x = x;
-        camera_pos.y = y;
-        camera_pos.z = z;
+        resonanceAudioScene.setListenerPosition(x, y, z);
+        resonanceAudioScene.setListenerOrientation(-yaw, 0, 0, 0, 0, 0);
     })
 
     // Update position of a player
@@ -24,7 +22,7 @@ $(document).ready(function()
             return;
         }
 
-        calls[sid].source.setPosition(x - camera_pos.x, y - camera_pos.y, z - camera_pos.z);
+        calls[sid].source.setPosition(x, y, z);
 
     })
 
