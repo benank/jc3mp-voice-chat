@@ -70,6 +70,7 @@ jcmp.events.Add('GameUpdateRender', (r) =>
     if (!ui) {return;}
 
     const pos = jcmp.localPlayer.camera.position;
+    ui.CallEvent('update_camera', pos.x, pos.y, pos.z);
 
     // Update positions of people who are talking
     for (let i = 0; i < players_talking.length; i++)
@@ -81,11 +82,8 @@ jcmp.events.Add('GameUpdateRender', (r) =>
         if (pid !== undefined && player)
         {
             const player_pos = player.GetBoneTransform(0x87AE44CB, r.dtf).position; // Upper lip
-            let dist = player_pos.sub(pos).length;
-            dist = (dist < config.min_distance) ? 0 : dist; // If it's within the min distance
-            const volume = 1 - (dist / config.max_distance); // Get volume
 
-            ui.CallEvent('update_volume', sid, volume);
+            ui.CallEvent('update_position', sid, player_pos.x, player_pos.y, player_pos.z);
 
             RenderSpeaker(r, player.GetBoneTransform(0xA877D9CC, r.dtf));
         }
@@ -100,6 +98,7 @@ jcmp.events.Add('GameUpdateRender', (r) =>
     }
 })
 
+// Block voice chat from triggering while someone is typing
 jcmp.ui.AddEvent('chat_input_state', (s) => 
 {
     if (!ui) {return;}
